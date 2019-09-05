@@ -1,29 +1,27 @@
 <?php
+session_start();
+
 class Save {
 
-    function test($elements) {
-        print_r($elements);
-        // file_put_contents('uploads/data.csv', "");
-        $file = fopen('uploads/data.csv', 'w');
-        $i = 0;
-        foreach ($elements as $value) {
-            $text = $elements['row'.$i][0].",".$elements['row'.$i][1];
+    function saveData($elementsToSave) {
 
-            if($value == end($elements)) {
-                fwrite($file, $text);
-            } else {
-                fwrite($file, $text."\n");
-            }
-            
-            $i++;
+        $array = array();
+        
+        foreach($elementsToSave as $value){
+            $tempArray = array();
+
+            $tempArray[] = $value[0];
+            $tempArray[] = $value[1];
+
+            array_push($array, $tempArray);
         }
 
-        fclose($file);
-
-        header("Location: main.php?uploadOk=true");
+        return $array;
     }
 }
 
 $test = new Save;
-$test->test($_POST);
+$_SESSION['data'] = $test->saveData($_POST);
+
+header("Location: main.php");
 ?>

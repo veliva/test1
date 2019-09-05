@@ -1,60 +1,38 @@
 <?php
+
 class Export {
-    public $file;
+    public $array;
+    public $fileName;
 
-    function __construct($file) {
-        $this->file = $file;
-    }
-
-    function exportFile() {
-        if (file_exists($this->file)) {
-            header('Content-Description: File Transfer');
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="'.basename($this->file).'"');
-            header('Expires: 0');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
-            header('Content-Length: ' . filesize($this->file));
-            readfile($this->file);
-            exit;
-        }
+    function __construct($array, $fileName) {
+        $this->array = $array;
+        $this->fileName = $fileName;
     }
 }
 
-class ExportToPHP extends Export {
-    public $elements = array();
-
-    function __construct(){
-        parent::__construct("data.php");
-    }
-
-    function CSVtoArray() {
-        $file = fopen('uploads/data.csv', 'r');
-        while (($line = fgetcsv($file)) !== FALSE) {
-            // print_r($line);
-            array_push($this->elements, array($line[0], $line[1]));
+class ArrayToCSV extends Export{
+    
+    function export() {
+        $file = fopen($this->fileName, 'w');
+        foreach($this->array as $item) {
+            $text = $item[0].",".$item[1]."\n";
+            fwrite($file, $text);
         }
-        fclose($file);
-        // echo "<br>";
-    }
 
-    function arrayToPHP() {
-        // print_r($this->elements);
-        $file = fopen( 'data.php', 'w');
+        fclose($file);
+    }
+}
+
+class ArrayToPHP extends Export {
+
+    function export() {
+        $file = fopen( $this->fileName, 'w');
         fwrite($file, "<?php"."\n");
         fwrite($file, "return ["."\n");
         
-        $i = 0;
-        foreach($this->elements as $item) {
-            fwrite($file, "'".$item[0]."'"."=>"."'".$item[1]."'");
-            
-            if(count($this->elements) != $i) {
-                fwrite($file, ",\n");
-            } else {
-                fwrite($file, "\n");
-            }
-
-            $i++;
+        foreach($this->array as $item) {
+            $text = "'".$item[0]."'"."=>"."'".$item[1]."'".",\n";
+            fwrite($file, $text);
         }
 
         fwrite($file, "];"."\n");
@@ -63,4 +41,18 @@ class ExportToPHP extends Export {
         fclose($file);
     }
 }
+
+class CSVtoArray extends Export {
+
+    function export() {
+        $file = fopen($this->fileName, 'r');
+        while (($line = fgetcsv($file)) !== FALSE) {
+            array_push($this->array, array($line[0], $line[1]));
+        }
+        fclose($file);
+
+        return $this->array;
+    }
+}
+
 ?>

@@ -1,20 +1,23 @@
 <?php
-function CSVtoTable(){
+
+session_start();
+
+function dataToTable(){
     echo "<form action='save.php' method='post' style='width: 150px; height: 30px;' autocomplete='off'>";
     echo "<input type='submit' value='Save' style='width: 150px; height: 30px;'>";
     echo "<br><br>";
     echo "<table style='border: 1px solid black;'>\n\n";
-    $f = fopen("uploads/data.csv", "r");
+
     $i = 0;
-    while (($line = fgetcsv($f)) !== false) {
+    foreach($_SESSION['data'] as $value) {
         echo "<tr>";
-        foreach ($line as $cell) {
+        foreach ($value as $cell) {
             echo "<td style='border: 1px solid black; text-align: center; padding: 5px;'>". "<input type='text' value='". htmlspecialchars($cell) ."' name='row". $i ."[]" ."'/> </td>";
         }
         $i++;
         echo "</tr>\n";
     }
-    fclose($f);
+
     echo "</form>";
     echo "\n</table>";
 }
@@ -31,7 +34,7 @@ function CSVtoTable(){
     <form action="main.php?uploadOk=true" method="post">
         <input type="submit" value="<- Back without saving" style="width: 150px; height: 30px;">
     </form>
-    <div id="tableFromCSV"><?php echo CSVtoTable(); ?></div>
+    <div id="tableFromCSV"><?php echo dataToTable(); ?></div>
 </body>
 
 </html>

@@ -1,41 +1,50 @@
 <?php
-$target_dir = "uploads/";
-$target_file = $target_dir . "data.csv";
-echo $target_file;
-$uploadOk = true;
-$fileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+class Upload {
+    public $target_file;
+    public $requiredFileType;
+    public $fileFromUpload;
 
-function moveToMain($isUploadOk){
-    header("Location: main.php?uploadOk=".$isUploadOk);
-}
-
-if(isset($_POST["submit"])) {
-    if($fileType == 'csv'){
-        echo "It really is csv file!";
-        $uploadOk = true;
-    } else {
-        echo "Only csv files are allowed!";
-        $uploadOk = false;
+    function __construct($target_file, $requiredFileType, $fileFromUpload) {
+        $this->target_file = $target_file;
+        $this->requiredFileType = $requiredFileType;
+        $this->fileFromUpload = $fileFromUpload;
     }
 
-    // Check file size
-    if ($_FILES["fileToUpload"]["size"] > 500000) {
-        echo "Sorry, your file is too large.";
-        $uploadOk = false;
+    function checkFileType() {
+        $fileType = strtolower(pathinfo($this->target_file,PATHINFO_EXTENSION));
+        if($fileType == $this->requiredFileType){
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    if ($uploadOk == false) {
-        echo "Sorry, your file was not uploaded.";
-        moveToMain($uploadOk);
-    // if everything is ok, try to upload file
-    } else {
-        if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-            echo "The file ". basename( $_FILES["fileToUpload"]["name"]). " has been uploaded.";
-            moveToMain($uploadOk);
+    function checkFileSize() {
+        if ($this->fileFromUpload["size"] > 500000) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function upload() {
+        if (move_uploaded_file($this->fileFromUpload["tmp_name"], $this->target_file)) {
+            echo "The file ". basename( $this->fileFromUpload["name"]). " has been uploaded.";
         } else {
             echo "Sorry, there was an error uploading your file.";
-            moveToMain($uploadOk);
         }
     }
 }
+
+$test = new Upload("uploads/updata.csv", 'csv', $_FILES["fileToUpload"]);
+$isFileTypeOk = $test->checkFileType();
+$isFileSizeOk = $test->checkFileSize();
+if($isFileSizeOk == true && $isFileTypeOk == true){
+    $test->upload();
+
+    header("Location: main.php?upload=true");
+} else {
+    header("Location: main.php?upload=false");
+}
+
 ?>

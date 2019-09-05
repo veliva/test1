@@ -1,27 +1,31 @@
 <?php
-class Add {
+session_start();
+class Add{
     public $key;
     public $value;
+    public $array;
 
-    function __construct($key, $value) {
+    function __construct($key, $value, $array) {
         $this->key = $key;
         $this->value = $value;
+        $this->array = $array;
     }
 
     function addRow() {
-        if(filter_var($_POST['uploadOkHidden'], FILTER_VALIDATE_BOOLEAN) == false) {
-            file_put_contents('uploads/data.csv', "");
-        }
+        $temp = array();
 
-        $file = fopen( 'uploads/data.csv', 'a+');
-        $text = $this->key.",".$this->value."\n";
-        fwrite($file, $text);
-        fclose($file);
+        $temp[] = $this->key;
+        $temp[] = $this->value;
 
-        header("Location: main.php?uploadOk=true");
+        array_push($this->array, $temp);
+
+        return $this->array;
     }
+
 }
 
-$test = new Add($_POST['keyAdd'], $_POST['valueAdd']);
-$test->addRow();
+$test = new Add($_POST['keyAdd'], $_POST['valueAdd'], $_SESSION['data']);
+$_SESSION['data'] = $test->addRow();
+
+header("Location: main.php");
 ?>
