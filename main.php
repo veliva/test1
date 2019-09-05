@@ -9,7 +9,7 @@ if(!isset($_SESSION['data'])){
     $_SESSION['data'] = array();
 }
 
-if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true) {
+if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true && count($_SESSION['data'])>0) {
     $test = new ArrayToCSV($_SESSION['data'], "download/data.csv");
     $test->export();
 
@@ -17,7 +17,7 @@ if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true) {
     $download->download();
 }
 
-if(array_key_exists('PHP',$_GET) && $_GET['PHP'] == true) {
+if(array_key_exists('PHP',$_GET) && $_GET['PHP'] == true && count($_SESSION['data'])>0) {
     $test = new ArrayToPHP($_SESSION['data'], "download/data.php");
     $test->export();
 
