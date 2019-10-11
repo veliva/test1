@@ -1,31 +1,36 @@
 <?php
-session_start();
+include "../config.php";
 class Add{
-    public $key;
-    public $value;
-    public $array;
+    public $db_connection;
+    public $stmtname;
+    public $prepared_sql_query;
+    public $sql_query_values;
 
-    function __construct($key, $value, $array) {
-        $this->key = $key;
-        $this->value = $value;
-        $this->array = $array;
+    function __construct($db_connection, $stmtname, $prepared_sql_query, $sql_query_values) {
+        $this->db_connection = $db_connection;
+        $this->stmtname = $stmtname;
+        $this->prepared_sql_query = $prepared_sql_query;
+        $this->sql_query_values = $sql_query_values;
     }
 
     function addRow() {
-        $temp = array();
+        $result = pg_prepare($this->db_connection, $this->stmtname, $this->prepared_sql_query);
+        $result = pg_execute($this->db_connection, $this->stmtname, $this->sql_query_values);
 
-        $temp[] = $this->key;
-        $temp[] = $this->value;
-
-        array_push($this->array, $temp);
-
-        return $this->array;
+        pg_close($this->db_connection);
     }
 
 }
 
-$test = new Add($_POST['keyAdd'], $_POST['valueAdd'], $_SESSION['data']);
-$_SESSION['data'] = $test->addRow();
+$sql_tablename = $_COOKIE['user'];
+$sql = 'INSERT INTO "'.$sql_tablename.'"(key,value) VALUES ($1, $2)';
+$test = new Add(
+    pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword),
+    "addRow",
+    $sql,
+    array($_POST['keyAdd'], $_POST['valueAdd'])
+);
+$test->addRow();
 
 header("Location: main.php");
 ?>

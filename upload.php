@@ -1,4 +1,5 @@
 <?php
+
 class Upload {
     public $target_file;
     public $requiredFileType;

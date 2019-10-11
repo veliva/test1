@@ -1,27 +1,18 @@
 <?php
-session_start();
-class Delete {
-    public $rowNumber;
-    public $array;
-
-    function __construct($rowNumber, $array) {
-        $this->rowNumber = $rowNumber;
-        $this->array = $array;
-    }
-
-    function deleteRow(){
-        unset($this->array[$this->rowNumber]);
-        $this->array = array_values($this->array);
-        print_r($this->array);
-
-        return $this->array;
-    }
-        
-}
+include "../config.php";
+include "RunSQLQuery.php";
 
 if(isset($_GET['rowNumber'])){
-    $test = new Delete($_GET['rowNumber'], $_SESSION['data']);
-    $_SESSION['data'] = $test->deleteRow();
+    $deleteRow = new RunSQLQuery();
+    
+    $deleteRow->db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
+    $deleteRow->stmtname = "deleteRow";
+    $deleteRow->prepared_sql_query = 'DELETE FROM "'.$_COOKIE['user'].'" WHERE "id" =($1);';
+    $deleteRow->sql_query_values = array($_GET['rowNumber']);
+
+    $deleteRow->executeQuery();
+
+    pg_close($deleteRow->db_connection);
 
     header("Location: main.php");
 }

@@ -1,63 +1,86 @@
 <?php
-
-session_start();
-
+include "../config.php";
 include 'export.php';
 include 'downloadFile.php';
+include "RunSQLQuery.php";
 
-if(!isset($_SESSION['data'])){
-    $_SESSION['data'] = array();
+if(is_null($_COOKIE['user'])){
+    header("Location: cookie.php");
 }
 
-if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true && count($_SESSION['data'])>0) {
-    $test = new ArrayToCSV($_SESSION['data'], "download/data.csv");
-    $test->export();
-
-    $download = new DownloadFile("download/data.csv");
-    $download->download();
-}
-
-if(array_key_exists('PHP',$_GET) && $_GET['PHP'] == true && count($_SESSION['data'])>0) {
-    $test = new ArrayToPHP($_SESSION['data'], "download/data.php");
-    $test->export();
-
-    $download = new DownloadFile("download/data.php");
-    $download->download();
+if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true || array_key_exists('PHP',$_GET) && $_GET['PHP'] == true) {
+    $db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
+    $result = pg_query($db_connection, 'SELECT * FROM "'.$_COOKIE['user'].'" ORDER BY id ASC');
+    $tempArray = array();
+    while($row=pg_fetch_assoc($result)){
+        array_push($tempArray, array($row['key'], $row['value']));
+    }
+    pg_close($db_connection);
+    if(count($tempArray)>0){
+        if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true){
+            $test = new ArrayToCSV($tempArray, "download/data.csv");
+            $fileToDownload = "download/data.csv";
+        } elseif(array_key_exists('PHP',$_GET) && $_GET['PHP'] == true) {
+            $test = new ArrayToPHP($tempArray, "download/data.php");
+            $fileToDownload = "download/data.php";
+        }
+        $test->export();
+        $download = new DownloadFile($fileToDownload);
+        $download->download();
+    }
 }
 
 if(array_key_exists('upload',$_GET) && $_GET['upload'] == true) {
     $tempArray = array();
-    $test = new CSVtoArray($tempArray, "uploads/updata.csv");
-    $tempArray = $test->export();
-    $_SESSION['data'] = array();
-    $_SESSION['data'] = $tempArray;
+    $userFileToArray = new CSVtoArray($tempArray, "uploads/updata.csv");
+    $tempArray = $userFileToArray->export();
+    
+    $userArrayToDB = new RunSQLQuery();
+    $userArrayToDB->db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
+    $userArrayToDB->stmtname = "truncateTable";
+    $userArrayToDB->prepared_sql_query = 'TRUNCATE "'.$_COOKIE['user'].'" RESTART IDENTITY;';
+    $userArrayToDB->sql_query_values = array();
+    $userArrayToDB->executeQuery();
+
+    $userArrayToDB->stmtname = "insertArrayToTable";
+    $userArrayToDB->prepared_sql_query = 'INSERT INTO "'.$_COOKIE['user'].'"(key, value) VALUES ($1, $2)';
+    $userArrayToDB->prepareLoop();
+    foreach($tempArray as $row){
+        $userArrayToDB->sql_query_values = array($row[0], $row[1]);
+        $userArrayToDB->executeLoop();
+    }
+    pg_close($userArrayToDB->db_connection);
 }
 
-function dataToTable() {
-    echo "<form action='edit.php' method='post' style='vertical-align:middle;
-    display: inline;' >
-    <input id='editButton' type='submit' value='Edit' style='width: 100px; height: 30px;'/>
-    </form>";
-    echo "<br><br>";
+function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword) {
+    $db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
+    $result = pg_query($db_connection, 'SELECT * FROM "'.$_COOKIE['user'].'" ORDER BY id ASC');
+
     echo "<table style='border: 1px solid black;'>\n\n";
-    $i = 0;
-    foreach ($_SESSION['data'] as $value) {
+    while($row=pg_fetch_assoc($result)){
         echo "<tr>";
         echo 
         "<td style='border: 1px solid black;'>
-            <form action='deleteRow.php?rowNumber=".$i."' method='post' style='vertical-align:middle;
+            <form action='deleteRow.php?rowNumber=". $row['id'] ."' method='post' style='vertical-align:middle;
             display: inline;' >
-            <input id='deleteButton".$i."' type='submit' value='Delete' />
+            <input id='deleteButton". $row['id'] ."' type='submit' value='Delete' />
             </form>
         </td>";
-        foreach ($value as $cell) {
-            echo "<td style='border: 1px solid black; text-align: center; padding: 5px;'>" . htmlspecialchars($cell) . "</td>";
-        }
-        echo "</tr>\n";
-        $i++;
+        echo 
+        "<td style='border: 1px solid black;'>
+            <form action='editRow.php?rowNumber=". $row['id'] ."' method='post' style='vertical-align:middle;
+            display: inline;' >
+            <input id='editButton". $row['id'] ."' type='submit' value='Edit' />
+            </form>
+        </td>";
+        echo "<td style='border: 1px solid black;' align='center'; padding: 5px;>" . $row['key'] . "</td>";
+        echo "<td style='border: 1px solid black;' align='center'; padding: 5px;>" . $row['value'] . "</td>";
+        echo "</tr>";
     }
-
     echo "\n</table>";
+    
+
+    pg_close($db_connection);
 }
 ?>
 
@@ -92,11 +115,11 @@ function dataToTable() {
     <input type="text" id="valueAdd" name="valueAdd" placeholder="Value" required>
     <input type="submit" value="Add">
 </form>
-<form action="destroy.php">
+<form action="reset.php">
     <input type="submit" value="Reset table">
 </form>
 <br>
-<div id="tableFromData"><?php if(!empty($_SESSION['data'])) { echo dataToTable(); } ?></div>
+<div id="tableFromData"><?php include "../config.php";echo dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword); ?></div>
     
 </body>
 
