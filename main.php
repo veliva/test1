@@ -2,11 +2,7 @@
 include "../config.php";
 include 'export.php';
 include 'downloadFile.php';
-include "RunSQLQuery.php";
-
-if(is_null($_COOKIE['user'])){
-    header("Location: cookie.php");
-}
+include "cookie.php";
 
 if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true || array_key_exists('PHP',$_GET) && $_GET['PHP'] == true) {
     $db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);

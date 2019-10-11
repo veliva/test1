@@ -28,7 +28,6 @@ if (!isset($_COOKIE['user'])){
     $cookieAdd->executeQuery();
 
     pg_close($cookieAdd->db_connection);
-
     header("Location: main.php");
 } else {
     setcookie('user', $_COOKIE['user'], time()+86400);
