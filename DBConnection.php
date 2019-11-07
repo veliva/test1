@@ -24,12 +24,4 @@ class Database extends DatabaseConfig {
 
 $dbconn = new Database();
 
-// $test = new Database();
-// // $result = $test->getDataFromDB();
-// print_r($test->runQuery('SELECT "id", "key", "value", "last_accessed" FROM "keyValueTable" WHERE id=? and value=? and key=?;', array(3, "jkl", "asd123")));
-// echo "<br>";
-// // $test->runQuery('INSERT INTO "keyValueTable"("key", "value") VALUES (?, ?);', array("üks", "kaks"));
-// echo "<br>";
-// $result = $test->runQuery('SELECT "id", "key", "value", "last_accessed" FROM "keyValueTable";');
-// print_r($result);
 ?>
