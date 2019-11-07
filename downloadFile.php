@@ -1,13 +1,13 @@
 <?php
 
 class DownloadFile {
-    public $file;
+    private $file;
 
-    function __construct($file) {
+    public function __construct($file) {
         $this->file = $file;
     }
 
-    function download() {
+    public function download() {
         if (file_exists($this->file)) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/octet-stream');

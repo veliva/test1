@@ -1,16 +1,9 @@
 <?php
-include "../config.php";
-include "RunSQLQuery.php";
+include "DBConnection.php";
 
-$resetTable = new RunSQLQuery();
-$resetTable->db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
-$resetTable->stmtname = "truncateTable";
-$resetTable->prepared_sql_query = 'TRUNCATE "'.$_COOKIE['user'].'" RESTART IDENTITY;';
-$resetTable->sql_query_values = array();
+$dbconn->runQuery('TRUNCATE "keyValueTable" RESTART IDENTITY;');
 
-$resetTable->executeQuery();
-
-pg_close($resetTable->db_connection);
+$dbconn->closeConnection();
 
 header("Location: main.php");
 ?>

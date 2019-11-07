@@ -1,17 +1,15 @@
 <?php
-include "../config.php";
 include 'export.php';
 include 'downloadFile.php';
-include "cookie.php";
+include 'DBConnection.php';
 
-if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true || array_key_exists('PHP',$_GET) && $_GET['PHP'] == true) {
-    $db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
-    $result = pg_query($db_connection, 'SELECT * FROM "'.$_COOKIE['user'].'" ORDER BY id ASC');
+function exportDatabase($dbconn) {
+    $result = $dbconn->runQuery('SELECT "id", "key", "value" FROM "keyValueTable" ORDER BY id ASC');
     $tempArray = array();
-    while($row=pg_fetch_assoc($result)){
+    foreach($result as $row) {
         array_push($tempArray, array($row['key'], $row['value']));
     }
-    pg_close($db_connection);
+    
     if(count($tempArray)>0){
         if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true){
             $test = new ArrayToCSV($tempArray, "download/data.csv");
@@ -26,34 +24,31 @@ if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true || array_key_exists('PH
     }
 }
 
-if(array_key_exists('upload',$_GET) && $_GET['upload'] == true) {
+function CSVtoDatabase($dbconn) {
     $tempArray = array();
     $userFileToArray = new CSVtoArray($tempArray, "uploads/updata.csv");
     $tempArray = $userFileToArray->export();
     
-    $userArrayToDB = new RunSQLQuery();
-    $userArrayToDB->db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
-    $userArrayToDB->stmtname = "truncateTable";
-    $userArrayToDB->prepared_sql_query = 'TRUNCATE "'.$_COOKIE['user'].'" RESTART IDENTITY;';
-    $userArrayToDB->sql_query_values = array();
-    $userArrayToDB->executeQuery();
+    $dbconn->runQuery('TRUNCATE "keyValueTable" RESTART IDENTITY;');
 
-    $userArrayToDB->stmtname = "insertArrayToTable";
-    $userArrayToDB->prepared_sql_query = 'INSERT INTO "'.$_COOKIE['user'].'"(key, value) VALUES ($1, $2)';
-    $userArrayToDB->prepareLoop();
     foreach($tempArray as $row){
-        $userArrayToDB->sql_query_values = array($row[0], $row[1]);
-        $userArrayToDB->executeLoop();
+        $dbconn->runQuery('INSERT INTO "keyValueTable"(key, value) VALUES (?, ?);', array($row[0], $row[1]));
     }
-    pg_close($userArrayToDB->db_connection);
 }
 
-function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword) {
-    $db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
-    $result = pg_query($db_connection, 'SELECT * FROM "'.$_COOKIE['user'].'" ORDER BY id ASC');
+if(array_key_exists('CSV',$_GET) && $_GET['CSV'] == true || array_key_exists('PHP',$_GET) && $_GET['PHP'] == true) {
+    exportDatabase($dbconn);
+}
+
+if(array_key_exists('upload',$_GET) && $_GET['upload'] == true) {
+    CSVtoDatabase($dbconn);
+}
+
+function dataToTable($dbconn) {
+    $result = $dbconn->runQuery('SELECT "id", "key", "value" FROM "keyValueTable" ORDER BY id ASC');
 
     echo "<table style='border: 1px solid black;'>\n\n";
-    while($row=pg_fetch_assoc($result)){
+    foreach($result as $row){
         echo "<tr>";
         echo 
         "<td style='border: 1px solid black;'>
@@ -74,9 +69,6 @@ function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword) {
         echo "</tr>";
     }
     echo "\n</table>";
-    
-
-    pg_close($db_connection);
 }
 ?>
 
@@ -115,7 +107,11 @@ function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword) {
     <input type="submit" value="Reset table">
 </form>
 <br>
-<div id="tableFromData"><?php include "../config.php";echo dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword); ?></div>
+<div id="tableFromData">
+    <?php
+        echo dataToTable($dbconn);
+    ?>
+</div>
     
 </body>
 

@@ -1,11 +1,11 @@
 <?php
-function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword){
-    $db_connection = pg_connect("host=".$serverHost." dbname=".$serverDBName." user=".$serverUser." password=".$serverPassword);
-    $result = pg_prepare($db_connection, "getEditableRow", 'SELECT * FROM "'.$_COOKIE['user'].'" WHERE "id" = ($1);');
-    $result = pg_execute($db_connection, "getEditableRow", array($_GET['rowNumber']));
+include 'DBConnection.php';
+
+function dataToTable($dbconn){
+    $result = $dbconn->runQuery('SELECT "id", "key", "value" FROM "keyValueTable" WHERE id=?;', array($_GET['rowNumber']));
     
     $i=0;
-    while($row=pg_fetch_assoc($result)){
+    foreach($result as $row) {
         if($i==0){
             echo "<form action='updateRow.php?id=".$row['id']."' method='post' style='width: 150px; height: 30px;' autocomplete='off'>";
             echo "<input type='submit' value='Save' style='width: 150px; height: 30px;'>";
@@ -20,7 +20,8 @@ function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword){
     }
     echo "</form>";
     echo "\n</table>";
-    pg_close($db_connection);
+    
+    $dbconn->closeConnection();
 }
 ?>
 
@@ -32,10 +33,14 @@ function dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword){
     <title>Test1</title>
 </head>
 <body>
-    <form action="main.php?uploadOk=true" method="post">
+    <form action="main.php" method="post">
         <input type="submit" value="<- Back without saving" style="width: 150px; height: 30px;">
     </form>
-    <div id="tableFromCSV"><?php include "../config.php";echo dataToTable($serverHost, $serverDBName, $serverUser, $serverPassword); ?></div>
+    <div id="tableFromCSV">
+        <?php
+            echo dataToTable($dbconn);
+        ?>
+    </div>
 </body>
 
 </html>

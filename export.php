@@ -1,10 +1,10 @@
 <?php
 
 class Export {
-    public $array;
-    public $fileName;
+    protected $array;
+    protected $fileName;
 
-    function __construct($array, $fileName) {
+    public function __construct($array, $fileName) {
         $this->array = $array;
         $this->fileName = $fileName;
     }
@@ -12,7 +12,7 @@ class Export {
 
 class ArrayToCSV extends Export{
     
-    function export() {
+    public function export() {
         $file = fopen($this->fileName, 'w');
         foreach($this->array as $item) {
             $text = $item[0].",".$item[1]."\n";
@@ -25,7 +25,7 @@ class ArrayToCSV extends Export{
 
 class ArrayToPHP extends Export {
 
-    function export() {
+    public function export() {
         $file = fopen( $this->fileName, 'w');
         fwrite($file, "<?php"."\n");
         fwrite($file, "return ["."\n");
@@ -44,7 +44,7 @@ class ArrayToPHP extends Export {
 
 class CSVtoArray extends Export {
 
-    function export() {
+    public function export() {
         $file = fopen($this->fileName, 'r');
         while (($line = fgetcsv($file)) !== FALSE) {
             array_push($this->array, array($line[0], $line[1]));
